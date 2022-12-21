@@ -363,11 +363,11 @@ vacancies_by_year.csv
 
 file_name = input('Введите название файла: ')
 vacancy_name = input('Введите название профессии: ')
-choose_type = input('Вакансии или Статистика?: ')
-if choose_type == "Вакансии":
-    choose_type = 0
+printing_type = input('Вакансии или Статистика?: ')
+if printing_type == "Вакансии":
+    printing_type = 0
 else:
-    choose_type = 1
+    printing_type = 1
 report = Report([
     "Год",
     "Средняя зарплата",
@@ -375,4 +375,4 @@ report = Report([
     "Количество вакансий",
     "Количество вакансий - " + vacancy_name])
 data_set = csv_read(file_name)
-data_set.get_stat(vacancy_name, choose_type)
+data_set.get_stat(vacancy_name, printing_type)
