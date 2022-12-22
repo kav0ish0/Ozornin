@@ -16,14 +16,36 @@ from jinja2 import Template
 
 
 def getpath():
+    """Возвращает путь к графику
+
+    Returns:
+        str: Путь к графику
+    """
     return os.path.join(os.path.abspath("."), "graph.png").replace("\\", '/')
 
 
 def get_percent(v):
+    """Конвертирует число от 0 до 1 в процентный вид
+
+    Args:
+        v (float): Число, процентный вид которого нужно получить
+    Returns:
+        str: Процентный вид числа v
+    """
     return f"{v * 100:.2f}%"
 
 
 class Vacancy:
+    """Класс для хранения данных о вакансии
+
+    Attributes:
+        name (str): Название вакансии
+        area_name (str): Название города вакансии
+        year (int): Год, в котором были сохранены данные о вакансии
+        salary_currency (str): Валюта вакансии
+        salary (int): Средняя зарплата вакансии в рублях
+    """
+
     currency_to_ruble = {
         "AZN": 35.68,
         "BYR": 23.91,
@@ -37,6 +59,16 @@ class Vacancy:
         "UZS": 0.0055}
 
     def __init__(self, **kwargs):
+        """Инициализирует объект Vacancy, выполняет конвертацию для целочисленного поля year
+
+        Named args:
+            name (str): Название вакансии
+            area_name (str): Название города вакансии
+            published_at (int): Дата появления вакансии
+            salary_currency (str): Валюта вакансии
+            salary_from (int or float or str): Нижняя граница оклада вакансии
+            salary_to (int or float or str): Верхняя граница оклада вакансии
+        """
         self.name = kwargs['name']
         self.area_name = kwargs['area_name']
         spliten = kwargs['published_at'].split('T')
@@ -49,11 +81,27 @@ class Vacancy:
 
 
 class DataSet:
+    """Класс для хранения данных о всех вакансиях и выводе информации о них
+
+    Attributes:
+        header (str[]): Названия полей о вакансии из csv файла
+        vacancies_objects (Vacancy[]): Массив с данными о всех вакансиях из csv файла
+    """
+
     def __init__(self, header):
+        """Инициализирует объект DataSet"""
         self.header = header
         self.vacancies_objects = []
 
     def get_stat(self, vacancy_name, print_type):
+        """Собирает статистику и данные о вакансиях и просит класс Report вывести их
+
+        Attributes:
+            vacancy_name (str): Название вакансии, о которой нужно отдельно собрать статистику
+            print_type (int):
+                Метод собирает данные о вакансиях в файл Excel, если 0.
+                Метод собирает статистику в .pdf файл, если 1.
+        """
         vacancies = self.vacancies_objects
         doly_stat = dict()
         salary_stat = dict()
@@ -116,6 +164,15 @@ class DataSet:
 
 
 class Report:
+    """Класс для вывода данных из класса DataSet
+
+    Attributes:
+        wb (Workbook): Главный объект хранения данных об Excel файле
+        ws1 (Worksheet): Объект страницы в Excel файле для статистики по годам
+        ws2 (Worksheet): Объект страницы в Excel файле для статистики по городам
+        thin_border (Border): Стиль границы для ячейки в Excel файле
+        columns (str[]): Названия колонок для статистики по годам
+    """
     wb: Workbook
     ws1: Worksheet
     ws2: Worksheet
@@ -123,6 +180,11 @@ class Report:
     columns = []
 
     def __init__(self, columns1):
+        """Инициализирует объект Report, подгатавливает Excel файл для записи данных
+
+        Arguments:
+            columns1 (str[]): Названия колонок для статистики по годам
+        """
         self.columns = columns1
 
         self.wb = Workbook()
@@ -159,6 +221,19 @@ class Report:
         cell.border = self.thin_border
 
     def generate_excel(self, data: list[dict], data2: list[dict]):
+        """Генерация Excel файла
+
+        Arguments:
+            data (list[dict]): лист данных о вакансиях в следующем порядке:
+                1. Динамика уровня зарплат по годам
+                2. Динамика уровня зарплат по годам для выбранной профессии
+                3. Динамика количества вакансий по годам
+                4. Динамика количества вакансий по годам для выбранной профессии
+            data2 (list[dict]): лист статистики данных в следующем порядке:
+                1. Уровень зарплат по городам (в порядке убывания, первые 10 значений)
+                2. Доля вакансий по городам (в порядке убывания, первые 10 значений)
+        """
+
         a = data[0]  # for keys
         for i, key in enumerate(a, 2):
             year_cell = self.ws1.cell(i, 1, key)
@@ -205,6 +280,17 @@ class Report:
 
     def generate_image(self, salary_stat, vacancy_count_stat, selected_salary_stat,
                        selected_count_stat, area_salary_stat, doly_stat):
+        """Генерация графика в файл graph.png
+
+        Arguments:
+            salary_stat (dict): Динамика уровня зарплат по годам
+            selected_salary_stat (dict): Динамика уровня зарплат по годам для выбранной профессии
+            vacancy_count_stat (dict): Динамика количества вакансий по годам
+            selected_count_stat (dict): Динамика количества вакансий по годам для выбранной профессии
+            area_salary_stat (dict): Уровень зарплат по городам (в порядке убывания)
+            doly_stat (dict): Доля вакансий по городам (в порядке убывания)
+        """
+
         plt.rcParams.update({'font.size': 8})
         fig = plt.figure()
 
@@ -257,6 +343,17 @@ class Report:
 
     def generate_pdf(self, salary_stat, vacancy_count_stat, selected_salary_stat,
                      selected_count_stat, area_salary_stat, doly_stat):
+        """Генерация статистики в файл report.pdf
+
+        Arguments:
+            salary_stat (dict): Динамика уровня зарплат по годам
+            selected_salary_stat (dict): Динамика уровня зарплат по годам для выбранной профессии
+            vacancy_count_stat (dict): Динамика количества вакансий по годам
+            selected_count_stat (dict): Динамика количества вакансий по годам для выбранной профессии
+            area_salary_stat (dict): Уровень зарплат по городам (в порядке убывания)
+            doly_stat (dict): Доля вакансий по городам (в порядке убывания)
+        """
+
         report.generate_image(salary_stat, vacancy_count_stat, selected_salary_stat,
                               selected_count_stat, area_salary_stat, doly_stat)
 
@@ -347,6 +444,13 @@ class Report:
 
 
 def csv_read(filename):
+    """Считывание данных о вакансиях из .csv файла
+
+    Arguments:
+        filename (str): Путь к файлу .csv с данными о вакансиях
+    Returns:
+        DataSet: Объект DataSet
+    """
     with open(filename, encoding='utf-8-sig') as file:
         reader = csv.reader(file)
         header = reader.__next__()
